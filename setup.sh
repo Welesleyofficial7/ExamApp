@@ -1,32 +1,13 @@
 #!/bin/bash
 
-set -e
+docker-compose down
 
-# Путь к проектам
-GATEWAY_PROJECT="ExamApp"
-DOMAIN_PROJECT="DomainService"
+docker builder prune -f
+docker image prune -f
 
-# Папка публикации
-GATEWAY_OUTPUT="./publish/$GATEWAY_PROJECT"
-DOMAIN_OUTPUT="./publish/$DOMAIN_PROJECT"
+dotnet publish -c Release -o ./publish/ExamApp
+dotnet publish -c Release -o ./publish/DomainService
 
-# Очистка предыдущих сборок
-echo "Очистка предыдущих сборок..."
-rm -rf ./publish
+docker-compose build --no-cache
 
-# Сборка и публикация Gateway (ExamApp)
-echo "Сборка и публикация Gateway (ExamApp)..."
-dotnet publish $GATEWAY_PROJECT -o $GATEWAY_OUTPUT
-
-# Сборка и публикация DomainService
-echo "Сборка и публикация DomainService..."
-dotnet publish $DOMAIN_PROJECT -o $DOMAIN_OUTPUT
-
-# Сборка Docker-образов
-echo "Создание Docker-образов..."
-docker build -t examapp:latest ./ExamApp  # Указываем директорию с Dockerfile
-docker build -t domainservice:latest ./DomainService  # Указываем директорию с Dockerfile
-
-# Запуск контейнеров
-echo "Запуск контейнеров через docker-compose..."
 docker-compose up -d
