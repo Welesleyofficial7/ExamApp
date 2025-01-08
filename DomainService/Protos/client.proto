@@ -5,28 +5,21 @@ option csharp_namespace = "ExamApp";
 package client;
 
 service ClientService {
-  // Получить одного клиента по ID
   rpc GetClient(GetClientRequest) returns (GetClientResponse);
 
-  // Создать нового клиента
   rpc CreateClient(CreateClientRequest) returns (Empty);
 
-  // Обновить клиента по ID
   rpc UpdateClient(UpdateClientRequest) returns (Empty);
 
-  // Удалить клиента по ID
   rpc DeleteClient(DeleteClientRequest) returns (Empty);
 
-  // Получить всех клиентов (ничего не принимает, возвращает список)
   rpc GetAllClients(Empty) returns (GetAllClientsResponse);
 }
 
-// Запрос для получения одного клиента
 message GetClientRequest {
   string id = 1;
 }
 
-// Ответ при получении одного клиента
 message GetClientResponse {
   string id = 1;
   string first_name = 2;
@@ -35,7 +28,6 @@ message GetClientResponse {
   string phone = 5;
 }
 
-// Запрос при создании клиента
 message CreateClientRequest {
   string first_name = 1;
   string last_name = 2;
@@ -43,7 +35,6 @@ message CreateClientRequest {
   string phone = 4;
 }
 
-// Запрос при обновлении клиента
 message UpdateClientRequest {
   string id = 1;
   string first_name = 2;
@@ -52,16 +43,13 @@ message UpdateClientRequest {
   string phone = 5;
 }
 
-// Запрос при удалении клиента
 message DeleteClientRequest {
   string id = 1;
 }
 
-// Ответ при получении всех клиентов
 message GetAllClientsResponse {
   repeated GetClientResponse clients = 1;
 }
 
-// Пустое сообщение для тех случаев, 
-// когда метод не принимает никакого входа
+// Пустое сообщение для тех случаев,
 message Empty {}

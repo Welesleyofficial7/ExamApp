@@ -8,7 +8,6 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Настройка MongoDB
 var mongoConnectionString = "mongodb://mongo:27017";
 var mongoDatabaseName = "customerdatabase";
 
@@ -19,15 +18,12 @@ builder.Services.AddSingleton<MongoDbContext>(provider =>
 
 builder.Services.AddScoped<IClientRepository, MongoClientRepository>();
 
-// Настройка RabbitMQ
 var rabbitConnectionString = "amqp://guest:guest@rabbitmq:5672";
 builder.Services.AddSingleton<IBus>(_ => RabbitHutch.CreateBus(rabbitConnectionString));
 builder.Services.AddSingleton<RabbitMqConsumer>();
 
-// Включаем поддержку HTTP/2
 AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
-// Настройка Kestrel
 builder.WebHost.ConfigureKestrel(options =>
 {
     options.ListenAnyIP(7014, listenOptions =>
@@ -37,30 +33,27 @@ builder.WebHost.ConfigureKestrel(options =>
     
     options.ListenAnyIP(7015, listenOptions =>
     {
-        listenOptions.Protocols = HttpProtocols.Http1; // Для метрик Prometheus
+        listenOptions.Protocols = HttpProtocols.Http1;
     });
 });
 
-// Настройка Serilog
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Debug()
     .WriteTo.Console()
     .CreateLogger();
 
-builder.Logging.ClearProviders(); // Убираем дефолтных провайдеров
-builder.Logging.AddSerilog();    // Добавляем Serilog
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog();
 builder.Services.AddGrpc();
 
 var app = builder.Build();
 
-// Запуск RabbitMQ Consumer
 var bus = app.Services.GetRequiredService<IBus>();
 var rabbitConsumer = app.Services.GetRequiredService<RabbitMqConsumer>();
 try
 {
     var subscriberId = $"ExamApp@{Environment.MachineName}";
 
-    // Повторные попытки подписки
     for (int i = 0; i < 5; i++)
     {
         try
@@ -88,7 +81,6 @@ catch (Exception ex)
 
 
 
-// Завершаем работу RabbitMQ при остановке приложения
 app.Lifetime.ApplicationStopping.Register(() =>
 {
     Log.Information("Shutting down RabbitMQ...");
@@ -96,7 +88,6 @@ app.Lifetime.ApplicationStopping.Register(() =>
     Log.Information("RabbitMQ shut down.");
 });
 
-// Настройка gRPC
 app.MapGrpcService<ClientServiceImpl>();
 
 static async Task HandleCreateClientMessage(CreateClientMessage message, IServiceProvider services)
@@ -144,10 +135,9 @@ static async Task HandleDeleteClientMessage(DeleteClientMessage message, IServic
 }
 
 
-rabbitConsumer.StartConsuming(); // Регистрируем обработчики для сообщений
+rabbitConsumer.StartConsuming();
 
-// Включаем HTTPS и запускаем приложение
-app.UseHttpMetrics();  // Регистрирует метрики для HTTP-запросов
-app.MapMetrics("/metrics"); // Регистрирует путь для метрик Prometheus
+app.UseHttpMetrics();
+app.MapMetrics("/metrics");
 app.UseHttpsRedirection();
 app.Run();
