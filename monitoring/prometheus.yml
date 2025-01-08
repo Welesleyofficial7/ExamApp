@@ -1,0 +1,10 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'gateway'
+    static_configs:
+      - targets: ['gateway:8080']
+  - job_name: 'grpc_service'
+    static_configs:
+      - targets: ['domainservice:7015']
